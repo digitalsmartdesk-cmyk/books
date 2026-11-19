@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book Catalog — Quick Reference</title>
+<style>
+  :root {
+    --mythokoo-ram: #c0580a;
+    --mythokoo-mah: #7c3aed;
+    --quizykoo: #0369a1;
+    --policy: #047857;
+    --wonderkoo: #0e7490;
+    --other: #be123c;
+    --bg: #f9f7f4;
+    --card: #ffffff;
+    --border: #e5e1db;
+    --text: #1a1714;
+    --muted: #6b6560;
+    --tag-live: #dcfce7;
+    --tag-live-text: #15803d;
+    --tag-review: #fef9c3;
+    --tag-review-text: #854d0e;
+  }
+  html { font-size: 17px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .header { background: #1a1714; color: #fff; padding: 20px 24px 16px; }
+  .header h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.01em; }
+  .header p { font-size: 0.8rem; color: #a09890; margin-top: 3px; }
+  .stats-row { display: flex; gap: 20px; margin-top: 12px; flex-wrap: wrap; }
+  .stat { display: flex; flex-direction: column; }
+  .stat-n { font-size: 1.4rem; font-weight: 700; line-height: 1; }
+  .stat-l { font-size: 0.7rem; color: #a09890; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+  .tabs { background: #fff; border-bottom: 1px solid var(--border); padding: 0 16px; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 10px 14px; font-size: 0.8rem; font-weight: 600; border: none; background: none; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; transition: color 0.15s; }
+  .tab.active { color: var(--text); border-bottom-color: #1a1714; }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .search-bar { padding: 12px 16px; background: #fff; border-bottom: 1px solid var(--border); }
+  .search-bar input { width: 100%; padding: 7px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; background: var(--bg); color: var(--text); outline: none; }
+  .search-bar input:focus { border-color: #9ca3af; }
+
+  .content { padding: 16px; max-width: 1100px; margin: 0 auto; }
+
+  .section-header { display: flex; align-items: center; gap: 10px; margin: 20px 0 10px; }
+  .section-header:first-child { margin-top: 4px; }
+  .section-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .section-title { font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .section-count { font-size: 0.75rem; color: var(--muted); background: var(--border); padding: 2px 7px; border-radius: 10px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+
+  .book-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 6px;
+    transition: box-shadow 0.15s;
+  }
+  .book-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+  .grid .book-card:nth-child(4n+1) { background: #fff7ed; border-color: #fed7aa; }
+  .grid .book-card:nth-child(4n+2) { background: #f0fdf4; border-color: #bbf7d0; }
+  .grid .book-card:nth-child(4n+3) { background: #eff6ff; border-color: #bfdbfe; }
+  .grid .book-card:nth-child(4n+4) { background: #fdf4ff; border-color: #e9d5ff; }
+
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .book-num { font-size: 0.65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; flex-shrink: 0; }
+  .status-tag { font-size: 0.65rem; font-weight: 600; padding: 2px 7px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
+  .status-live { background: var(--tag-live); color: var(--tag-live-text); }
+  .status-review { background: var(--tag-review); color: var(--tag-review-text); }
+
+  .book-title { font-size: 0.95rem; font-weight: 700; line-height: 1.25; }
+  .book-subtitle { font-size: 0.75rem; color: var(--muted); line-height: 1.4; }
+
+  .card-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+  .link-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 0.72rem; font-weight: 600; padding: 4px 10px; border-radius: 6px;
+    text-decoration: none; transition: opacity 0.15s; white-space: nowrap;
+  }
+  .link-btn:hover { opacity: 0.8; }
+  .link-btn svg { width: 11px; height: 11px; flex-shrink: 0; }
+
+  .btn-amazon  { background: #fff8e7; color: #b45309; border: 1px solid #fcd34d; }
+  .btn-payhip  { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; }
+  .btn-google  { background: #eff6ff; color: #1d4ed8; border: 1px solid #93c5fd; }
+  .btn-disabled { background: #f3f4f6; color: #9ca3af; border: 1px solid #e5e7eb; cursor: default; pointer-events: none; }
+
+  .price-row { display: flex; gap: 8px; align-items: center; }
+  .price { font-size: 0.72rem; color: var(--muted); }
+  .price strong { color: var(--text); font-weight: 600; }
+
+  .asin-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+  .asin-text { font-size: 0.65rem; font-family: monospace; color: var(--muted); background: var(--bg); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
+  .copy-btn { font-size: 0.65rem; color: var(--muted); background: none; border: none; cursor: pointer; padding: 2px 4px; border-radius: 3px; }
+  .copy-btn:hover { background: var(--border); color: var(--text); }
+
+  .empty { text-align: center; color: var(--muted); padding: 40px; font-size: 0.9rem; }
+
+  .footer { text-align: center; font-size: 0.72rem; color: var(--muted); padding: 24px 16px; border-top: 1px solid var(--border); margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📚 Book Catalog — Quick Reference</h1>
+  <p>All titles · KDP + Payhip + Google Play · Last updated 2026-11-19</p>
+  <div class="stats-row">
+    <div class="stat"><span class="stat-n">44</span><span class="stat-l">KDP Titles</span></div>
+    <div class="stat"><span class="stat-n">44</span><span class="stat-l">Live</span></div>
+    <div class="stat"><span class="stat-n">0</span><span class="stat-l">In Review</span></div>
+    <div class="stat"><span class="stat-n">2</span><span class="stat-l">Payhip Books</span></div>
+    <div class="stat"><span class="stat-n">5</span><span class="stat-l">Series</span></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="all">All</button>
+  <button class="tab" data-tab="ramayana">🌿 Ramayana</button>
+  <button class="tab" data-tab="mahabharata">⚡ Mahabharata</button>
+  <button class="tab" data-tab="lifeskills">📗 Life Skills</button>
+  <button class="tab" data-tab="wonderkoo">🔭 WonderKoo</button>
+  <button class="tab" data-tab="aitrilogy">🤖 AI Trilogy</button>
+  <button class="tab" data-tab="policy">🏙️ Policy Books</button>
+  <button class="tab" data-tab="other">✍️ Vikas Gupta</button>
+</div>
+
+<div class="search-bar">
+  <input type="text" id="searchInput" placeholder="Search by title, character name…" oninput="filterBooks()">
+</div>
+
+<div class="content" id="mainContent">
+
+  <!-- MYTHOKOO RAMAYANA -->
+  <div class="section-header" data-section="ramayana">
+    <span class="section-dot" style="background:#c0580a"></span>
+    <span class="section-title" style="color:#c0580a">MythoKoo — Untold Heroes of the Ramayana</span>
+    <span class="section-count">8 books</span>
+  </div>
+  <div class="grid">
+
+    <div class="book-card" data-tab="ramayana" data-title="jatayu vulture king sita ramayana book 1">
+      <div class="card-top"><span class="book-num">Book 1</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">JATAYU</div>
+      <div class="book-subtitle">The Vulture King Who Gave His Life for Sita</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HJWZRD1M" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HJWZRD1M</span><button class="copy-btn" onclick="copyText('B0HJWZRD1M', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="ramayana" data-title="sampati elder eagle ramayana book 2">
+      <div class="card-top"><span class="book-num">Book 2</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">SAMPATI</div>
+      <div class="book-subtitle">The Elder Eagle of the Ramayana</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HJY9JY6B" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HJY9JY6B</span><button class="copy-btn" onclick="copyText('B0HJY9JY6B', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="ramayana" data-title="angad embassy monkey prince ramayana book 3">
+      <div class="card-top"><span class="book-num">Book 3</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">ANGAD'S EMBASSY</div>
+      <div class="book-subtitle">The Monkey Prince Who Stood Firm</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HK145L84" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HK145L84</span><button class="copy-btn" onclick="copyText('B0HK145L84', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="ramayana" data-title="nal neel builders sea ramayana book 4">
+      <div class="card-top"><span class="book-num">Book 4</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">NAL AND NEEL</div>
+      <div class="book-subtitle">The Builders Who Crossed the Sea</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HJZ1ZK74" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HJZ1ZK74</span><button class="copy-btn" onclick="copyText('B0HJZ1ZK74', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="ramayana" data-title="trijata demoness kindness ramayana book 5">
+      <div class="card-top"><span class="book-num">Book 5</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">TRIJATA</div>
+      <div class="book-subtitle">The Demoness Who Chose Kindness</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HJYVZCGZ" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HJYVZCGZ</span><button class="copy-btn" onclick="copyText('B0HJYVZCGZ', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="ramayana" data-title="shabari hermit waited rama ramayana book 6">
+      <div class="card-top"><span class="book-num">Book 6</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">SHABARI</div>
+      <div class="book-subtitle">The Hermit Who Waited for Rama</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HK1FL82T" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HK1FL82T</span><button class="copy-btn" onclick="copyText('B0HK1FL82T', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="ramayana" data-title="kewat boatman carried rama ganga ramayana book 7">
+      <div class="card-top"><span class="book-num">Book 7</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">KEWAT</div>
+      <div class="book-subtitle">The Boatman Who Carried Rama Across the Ganga</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HK53K1YQ" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HK53K1YQ</span><button class="copy-btn" onclick="copyText('B0HK53K1YQ', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="ramayana" data-title="jambavan bear king guided hanuman ramayana book 8">
+      <div class="card-top"><span class="book-num">Book 8</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">JAMBAVAN</div>
+      <div class="book-subtitle">The Bear-King Who Guided Hanuman</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HK56TJFR" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HK56TJFR</span><button class="copy-btn" onclick="copyText('B0HK56TJFR', this)">copy</button></div>
+    </div>
+
+  </div>
+
+  <!-- MYTHOKOO MAHABHARATA -->
+  <div class="section-header" data-section="mahabharata">
+    <span class="section-dot" style="background:#7c3aed"></span>
+    <span class="section-title" style="color:#7c3aed">MythoKoo — Untold Heroes of the Mahabharata</span>
+    <span class="section-count">8 books</span>
+  </div>
+  <div class="grid">
+
+    <div class="book-card" data-tab="mahabharata" data-title="ekalavya taught archery mahabharata book 9">
+      <div class="card-top"><span class="book-num">Book 9</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">EKALAVYA</div>
+      <div class="book-subtitle">The Boy Who Taught Himself Archery</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HL14B8M4" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HL14B8M4</span><button class="copy-btn" onclick="copyText('B0HL14B8M4', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="mahabharata" data-title="dhrishtadyumna warrior born fire mahabharata book 10">
+      <div class="card-top"><span class="book-num">Book 10</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">DHRISHTADYUMNA</div>
+      <div class="book-subtitle">The Warrior Born from Fire</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HJ6LX2PD" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HJ6LX2PD</span><button class="copy-btn" onclick="copyText('B0HJ6LX2PD', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="mahabharata" data-title="shikhandi three lives injustice mahabharata book 11">
+      <div class="card-top"><span class="book-num">Book 11</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">SHIKHANDI</div>
+      <div class="book-subtitle">Three Lives to Finish One Injustice</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HLPWXZYR" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HLPWXZYR</span><button class="copy-btn" onclick="copyText('B0HLPWXZYR', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="mahabharata" data-title="iravan brave son gave up tomorrow mahabharata book 12">
+      <div class="card-top"><span class="book-num">Book 12</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">IRAVAN</div>
+      <div class="book-subtitle">The Brave Son Who Gave Up Tomorrow</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HLPRST5D" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HLPRST5D</span><button class="copy-btn" onclick="copyText('B0HLPRST5D', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="mahabharata" data-title="ghatotkacha giant son saved pandavas mahabharata book 13">
+      <div class="card-top"><span class="book-num">Book 13</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">GHATOTKACHA</div>
+      <div class="book-subtitle">The Giant Son Who Saved the Pandavas</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HNNT8LQ7" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HNNT8LQ7</span><button class="copy-btn" onclick="copyText('B0HNNT8LQ7', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="mahabharata" data-title="barbarika mightiest warrior never fought mahabharata book 14">
+      <div class="card-top"><span class="book-num">Book 14</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">BARBARIKA</div>
+      <div class="book-subtitle">The Mightiest Warrior Who Never Fought</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HNV2N9WS" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HNV2N9WS</span><button class="copy-btn" onclick="copyText('B0HNV2N9WS', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="mahabharata" data-title="yuyutsu kaurava chose right mahabharata book 15">
+      <div class="card-top"><span class="book-num">Book 15</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">YUYUTSU</div>
+      <div class="book-subtitle">The One Kaurava Who Chose Right</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HPGNTCKZ" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HPGNTCKZ</span><button class="copy-btn" onclick="copyText('B0HPGNTCKZ', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="mahabharata" data-title="ulupi naga princess brought hero back mahabharata book 16">
+      <div class="card-top"><span class="book-num">Book 16</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">ULUPI</div>
+      <div class="book-subtitle">The Naga Princess Who Brought the Hero Back</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HPGMMPSV" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HPGMMPSV</span><button class="copy-btn" onclick="copyText('B0HPGMMPSV', this)">copy</button></div>
+    </div>
+
+  </div>
+
+  <!-- QUIZYKOO LIFE SKILLS -->
+  <div class="section-header" data-section="lifeskills">
+    <span class="section-dot" style="background:#0369a1"></span>
+    <span class="section-title" style="color:#0369a1">Quizykoo Life Skills Series</span>
+    <span class="section-count">20 books · Ages 5–10</span>
+  </div>
+  <div class="grid">
+
+    <div class="book-card" data-tab="lifeskills" data-title="good manners politeness kids life skills book 1"><div class="card-top"><span class="book-num">Book 1</span><span class="status-tag status-live">Live</span></div><div class="book-title">Good Manners &amp; Politeness</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0H3WBZ6L5" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0H3WBZ6L5</span><button class="copy-btn" onclick="copyText('B0H3WBZ6L5', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="sharing caring kids life skills book 2"><div class="card-top"><span class="book-num">Book 2</span><span class="status-tag status-live">Live</span></div><div class="book-title">Sharing &amp; Caring</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0H5987DQY" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0H5987DQY</span><button class="copy-btn" onclick="copyText('B0H5987DQY', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="listening communication kids life skills book 3"><div class="card-top"><span class="book-num">Book 3</span><span class="status-tag status-live">Live</span></div><div class="book-title">Listening &amp; Communication</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0H5L1RLS2" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0H5L1RLS2</span><button class="copy-btn" onclick="copyText('B0H5L1RLS2', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="friendship teamwork kids life skills book 4"><div class="card-top"><span class="book-num">Book 4</span><span class="status-tag status-live">Live</span></div><div class="book-title">Friendship &amp; Teamwork</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0H5LCZL4M" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0H5LCZL4M</span><button class="copy-btn" onclick="copyText('B0H5LCZL4M', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="respect kindness kids life skills book 5"><div class="card-top"><span class="book-num">Book 5</span><span class="status-tag status-live">Live</span></div><div class="book-title">Respect &amp; Kindness</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0H5MMWZS4" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0H5MMWZS4</span><button class="copy-btn" onclick="copyText('B0H5MMWZS4', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="understanding feelings kids life skills book 6"><div class="card-top"><span class="book-num">Book 6</span><span class="status-tag status-live">Live</span></div><div class="book-title">Understanding My Feelings</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0H9T4YC14" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0H9T4YC14</span><button class="copy-btn" onclick="copyText('B0H9T4YC14', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="managing anger frustration kids life skills book 7"><div class="card-top"><span class="book-num">Book 7</span><span class="status-tag status-live">Live</span></div><div class="book-title">Managing Anger &amp; Frustration</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0H7ST3576" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0H7ST3576</span><button class="copy-btn" onclick="copyText('B0H7ST3576', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="empathy caring others kids life skills book 8"><div class="card-top"><span class="book-num">Book 8</span><span class="status-tag status-live">Live</span></div><div class="book-title">Empathy &amp; Caring for Others</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HBQBJP9S" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0HBQBJP9S</span><button class="copy-btn" onclick="copyText('B0HBQBJP9S', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="confidence self-esteem kids life skills book 9"><div class="card-top"><span class="book-num">Book 9</span><span class="status-tag status-live">Live</span></div><div class="book-title">Confidence &amp; Self-Esteem</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HBQKC5G3" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0HBQKC5G3</span><button class="copy-btn" onclick="copyText('B0HBQKC5G3', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="mindfulness staying calm kids life skills book 10"><div class="card-top"><span class="book-num">Book 10</span><span class="status-tag status-live">Live</span></div><div class="book-title">Mindfulness &amp; Staying Calm</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HBQTDLF8" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0HBQTDLF8</span><button class="copy-btn" onclick="copyText('B0HBQTDLF8', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="healthy habits kids life skills book 11"><div class="card-top"><span class="book-num">Book 11</span><span class="status-tag status-live">Live</span></div><div class="book-title">Healthy Habits</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HJ9DH87X" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0HJ9DH87X</span><button class="copy-btn" onclick="copyText('B0HJ9DH87X', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="cleanliness organization kids life skills book 12"><div class="card-top"><span class="book-num">Book 12</span><span class="status-tag status-live">Live</span></div><div class="book-title">Cleanliness &amp; Organization</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0H9B8M34Z" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0H9B8M34Z</span><button class="copy-btn" onclick="copyText('B0H9B8M34Z', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="helping home kids life skills book 13"><div class="card-top"><span class="book-num">Book 13</span><span class="status-tag status-live">Live</span></div><div class="book-title">Helping at Home</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HJCBFC2Q" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0HJCBFC2Q</span><button class="copy-btn" onclick="copyText('B0HJCBFC2Q', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="time routine skills kids life skills book 14"><div class="card-top"><span class="book-num">Book 14</span><span class="status-tag status-live">Live</span></div><div class="book-title">Time &amp; Routine Skills</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HJC9JSPL" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0HJC9JSPL</span><button class="copy-btn" onclick="copyText('B0HJC9JSPL', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="safety awareness kids life skills book 15"><div class="card-top"><span class="book-num">Book 15</span><span class="status-tag status-live">Live</span></div><div class="book-title">Safety &amp; Awareness</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HJC9QXK2" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0HJC9QXK2</span><button class="copy-btn" onclick="copyText('B0HJC9QXK2', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="caring nature kids life skills book 16"><div class="card-top"><span class="book-num">Book 16</span><span class="status-tag status-live">Live</span></div><div class="book-title">Caring for Nature</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HJC8NJC4" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0HJC8NJC4</span><button class="copy-btn" onclick="copyText('B0HJC8NJC4', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="animals kindness kids life skills book 17"><div class="card-top"><span class="book-num">Book 17</span><span class="status-tag status-live">Live</span></div><div class="book-title">Animals &amp; Kindness</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HJC6TBJG" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0HJC6TBJG</span><button class="copy-btn" onclick="copyText('B0HJC6TBJG', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="saving water energy kids life skills book 18"><div class="card-top"><span class="book-num">Book 18</span><span class="status-tag status-live">Live</span></div><div class="book-title">Saving Water &amp; Energy</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HJJSV92J" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0HJJSV92J</span><button class="copy-btn" onclick="copyText('B0HJJSV92J', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="recycling clean living kids life skills book 19"><div class="card-top"><span class="book-num">Book 19</span><span class="status-tag status-live">Live</span></div><div class="book-title">Recycling &amp; Clean Living</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HJM9SV4H" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0HJM9SV4H</span><button class="copy-btn" onclick="copyText('B0HJM9SV4H', this)">copy</button></div></div>
+
+    <div class="book-card" data-tab="lifeskills" data-title="responsible citizen kids life skills book 20"><div class="card-top"><span class="book-num">Book 20</span><span class="status-tag status-live">Live</span></div><div class="book-title">Being a Responsible Citizen</div><div class="book-subtitle">for Kids Ages 5–10</div><div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HJM15VVF" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon</a></div><div class="asin-row"><span class="asin-text">B0HJM15VVF</span><button class="copy-btn" onclick="copyText('B0HJM15VVF', this)">copy</button></div></div>
+
+  </div>
+
+  <!-- WONDERKOO -->
+  <div class="section-header" data-section="wonderkoo">
+    <span class="section-dot" style="background:#0e7490"></span>
+    <span class="section-title" style="color:#0e7490">WonderKoo — Minds Universe</span>
+    <span class="section-count">4 books · Indian Scientists</span>
+  </div>
+  <div class="grid">
+
+    <div class="book-card" data-tab="wonderkoo" data-title="ramanujan boy spoke numbers scientist wonderkoo minds universe">
+      <div class="card-top"><span class="book-num">Minds Universe</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">RAMANUJAN</div>
+      <div class="book-subtitle">The Boy Who Spoke in Numbers</div>
+      <div class="price-row"><span class="price">Kindle <strong>$5.99</strong></span></div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HQX7XT89" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HQX7XT89</span><button class="copy-btn" onclick="copyText('B0HQX7XT89', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="wonderkoo" data-title="cv raman scientist followed light physics wonderkoo minds universe">
+      <div class="card-top"><span class="book-num">Minds Universe</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">C.V. RAMAN</div>
+      <div class="book-subtitle">The Scientist Who Followed Light</div>
+      <div class="price-row"><span class="price">Kindle <strong>$5.99</strong></span></div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HR66KSNM" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HR66KSNM</span><button class="copy-btn" onclick="copyText('B0HR66KSNM', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="wonderkoo" data-title="sn bose physicist name reached stars boson wonderkoo minds universe">
+      <div class="card-top"><span class="book-num">Minds Universe</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">S.N. BOSE</div>
+      <div class="book-subtitle">The Physicist Whose Name Reached the Stars</div>
+      <div class="price-row"><span class="price">Kindle <strong>$5.99</strong></span></div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HRWW1VCD" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HRWW1VCD</span><button class="copy-btn" onclick="copyText('B0HRWW1VCD', this)">copy</button></div>
+    </div>
+
+    <div class="book-card" data-tab="wonderkoo" data-title="jc bose man listened plants scientist wonderkoo minds universe">
+      <div class="card-top"><span class="book-num">Minds Universe</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">J.C. BOSE</div>
+      <div class="book-subtitle">The Man Who Listened to Plants</div>
+      <div class="price-row"><span class="price">Kindle <strong>$5.99</strong></span></div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HRX6CG3F" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HRX6CG3F</span><button class="copy-btn" onclick="copyText('B0HRX6CG3F', this)">copy</button></div>
+    </div>
+
+  </div>
+
+  <!-- AI TRILOGY -->
+  <div class="section-header" data-section="aitrilogy">
+    <span class="section-dot" style="background:#4f46e5"></span>
+    <span class="section-title" style="color:#4f46e5">The AI Trilogy</span>
+    <span class="section-count">1 book so far · Vikas Gupta</span>
+  </div>
+  <div class="grid">
+
+    <div class="book-card" data-tab="aitrilogy" data-title="curse of uniformity ai fluency trap vikas gupta ai trilogy book 1">
+      <div class="card-top"><span class="book-num">Book 1</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">The Curse of Uniformity</div>
+      <div class="book-subtitle">AI's Fluency Trap — by Vikas Gupta</div>
+      <div class="price-row"><span class="price">Kindle <strong>$6.99</strong> · ₹599</span></div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HS81LWCB" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HS81LWCB</span><button class="copy-btn" onclick="copyText('B0HS81LWCB', this)">copy</button></div>
+    </div>
+
+  </div>
+
+  <!-- POLICY BOOKS -->
+  <div class="section-header" data-section="policy">
+    <span class="section-dot" style="background:#047857"></span>
+    <span class="section-title" style="color:#047857">Policy Books — Public Policy Foundation</span>
+    <span class="section-count">2 books + bundle · Amazon + Payhip + Google Play</span>
+  </div>
+  <div class="grid">
+
+    <div class="book-card" data-tab="policy" data-title="india cities fourth largest economy 2027 policy">
+      <div class="card-top"><span class="book-num">Policy · Urban</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">India's Cities</div>
+      <div class="book-subtitle">Fourth Largest Economy by 2027, and Not One City in the World's Top Ten · 35 chapters · 103 charts · 20 cities</div>
+      <div class="price-row"><span class="price">Payhip <strong>$9.99</strong> · EPUB + PDF</span></div>
+      <div class="card-links">
+        <a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HQVGW122" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a>
+        <a class="link-btn btn-payhip" href="https://payhip.com/b/g6LRE" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>Buy on Payhip</a>
+        <a class="link-btn btn-google" href="https://play.google.com/store/books/details?id=VsgpEgAAQBAJ" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>Google Play</a>
+      </div>
+    </div>
+
+    <div class="book-card" data-tab="policy" data-title="rich country poor citizens india unfinished growth 2004 2036 policy">
+      <div class="card-top"><span class="book-num">Policy · Economy</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">Rich Country, Poor Citizens</div>
+      <div class="book-subtitle">India's Unfinished Growth, 2004–2036 · 43 chapters · 353 charts · international comparisons</div>
+      <div class="price-row"><span class="price">Payhip <strong>$12.99</strong> · EPUB + PDF</span></div>
+      <div class="card-links">
+        <a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HQVJ3W16" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a>
+        <a class="link-btn btn-payhip" href="https://payhip.com/b/exVp9" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>Buy on Payhip</a>
+        <a class="link-btn btn-google" href="https://play.google.com/store/books/details?id=qs4pEgAAQBAJ" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>Google Play</a>
+      </div>
+    </div>
+
+    <div class="book-card" data-tab="policy" data-title="ppf bundle rich country poor citizens india cities policy bundle">
+      <div class="card-top"><span class="book-num">Bundle · Both Books</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">The PPF Bundle</div>
+      <div class="book-subtitle">Rich Country, Poor Citizens + India's Cities — save vs buying separately</div>
+      <div class="price-row"><span class="price">Payhip <strong>$17.99</strong> · EPUB + PDF · both titles</span></div>
+      <div class="card-links">
+        <a class="link-btn btn-payhip" href="https://payhip.com/b/sPkzX" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>Buy Bundle on Payhip</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- VIKAS GUPTA -->
+  <div class="section-header" data-section="other">
+    <span class="section-dot" style="background:#be123c"></span>
+    <span class="section-title" style="color:#be123c">Vikas Gupta</span>
+    <span class="section-count">1 book</span>
+  </div>
+  <div class="grid">
+
+    <div class="book-card" data-tab="other" data-title="wtf is employability lie told young india vikas gupta">
+      <div class="card-top"><span class="book-num">Nonfiction · Career</span><span class="status-tag status-live">Live</span></div>
+      <div class="book-title">WTF Is Employability?</div>
+      <div class="book-subtitle">The Biggest Lie Told to Young India — by Vikas Gupta</div>
+      <div class="card-links"><a class="link-btn btn-amazon" href="https://www.amazon.com/dp/B0HG6WB2LG" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"/></svg>Amazon / Kindle</a></div>
+      <div class="asin-row"><span class="asin-text">B0HG6WB2LG</span><button class="copy-btn" onclick="copyText('B0HG6WB2LG', this)">copy</button></div>
+    </div>
+
+  </div>
+
+  <div class="empty" id="emptyState" style="display:none">No books match your search.</div>
+
+</div>
+
+<div class="footer">
+  44 KDP titles across 5 series · 2 Policy books (Amazon + Payhip + Google Play) · KDP data as of 2026-11-19
+</div>
+
+<script>
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      filterBooks();
+    });
+  });
+
+  function filterBooks() {
+    const activeTab = document.querySelector('.tab.active').dataset.tab;
+    const query = document.getElementById('searchInput').value.toLowerCase().trim();
+    const cards = document.querySelectorAll('.book-card');
+    let visible = 0;
+
+    cards.forEach(card => {
+      const tabMatch = activeTab === 'all' || card.dataset.tab === activeTab;
+      const searchMatch = !query || card.dataset.title.includes(query) ||
+        card.querySelector('.book-title').textContent.toLowerCase().includes(query) ||
+        card.querySelector('.book-subtitle').textContent.toLowerCase().includes(query);
+      const show = tabMatch && searchMatch;
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    document.querySelectorAll('.section-header').forEach(h => {
+      const sec = h.dataset.section;
+      h.style.display = (activeTab === 'all' || !sec || sec === activeTab) ? '' : 'none';
+    });
+
+    document.getElementById('emptyState').style.display = visible === 0 ? '' : 'none';
+  }
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = '✓';
+      setTimeout(() => btn.textContent = orig, 1500);
+    }).catch(() => {
+      btn.textContent = '✗';
+      setTimeout(() => btn.textContent = 'copy', 1500);
+    });
+  }
+</script>
+</body>
+</html>
