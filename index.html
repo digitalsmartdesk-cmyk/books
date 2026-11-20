@@ -100,6 +100,24 @@
   .empty { text-align: center; color: var(--muted); padding: 40px; font-size: 0.9rem; }
 
   .footer { text-align: center; font-size: 0.72rem; color: var(--muted); padding: 24px 16px; border-top: 1px solid var(--border); margin-top: 20px; }
+
+  .book-card::after {
+    display: block;
+    font-size: 0.69rem;
+    color: var(--muted);
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+    font-style: italic;
+    letter-spacing: 0.01em;
+  }
+  .book-card[data-tab="ramayana"]::after,
+  .book-card[data-tab="mahabharata"]::after { content: "Author: MythoKoo Stories  ·  Publisher: MythoKoo Stories"; }
+  .book-card[data-tab="lifeskills"]::after { content: "Author: Quizykoo Learning  ·  Publisher: Quizykoo Learning"; }
+  .book-card[data-tab="wonderkoo"]::after { content: "Author: WonderKoo Stories"; }
+  .book-card[data-tab="aitrilogy"]::after { content: "Author: Vikas Gupta"; }
+  .book-card[data-tab="other"]::after { content: "Author: Vikas Gupta  ·  Publisher: Vikas Gupta"; }
+  .book-card[data-tab="policy"]::after { content: "Publisher: Public Policy Foundation"; }
 </style>
 </head>
 <body>
